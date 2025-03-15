@@ -16,7 +16,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tg_id: Mapped[Optional[int]] = mapped_column(Integer, unique=True)
+    tg_id: Mapped[Optional[int]] = mapped_column(String(100), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     genre_subscriptions: Mapped[List["UserGenreSubscription"]] = relationship(
@@ -33,7 +33,7 @@ class User(Base):
 class Genre(Base):
     __tablename__ = "genres"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)  # ID жанра (TMDB)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
 
 

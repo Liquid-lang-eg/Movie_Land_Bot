@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
 class UserSchema(BaseModel):
-    id: int
-    tg_id: str
+    tg_id: int
+
+    class Config:
+        orm_mode = True
 
 class SubscribeRequest(BaseModel):
     user_id: int

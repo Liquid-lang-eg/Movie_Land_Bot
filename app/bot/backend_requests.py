@@ -35,3 +35,14 @@ async def get_actor_movies(actor_name: str):
 
     return enriched_movies
 
+
+async def register_user_in_backend(tg_id: int) -> dict:
+    payload = {"tg_id": tg_id}
+    async with ClientSession() as session:
+        async with session.post(f"{BACKEND_URL}/auth/register", json=payload) as resp:
+            if resp.headers.get("Content-Type", "").startswith("application/json"):
+                return await resp.json()
+            else:
+                text = await resp.text()
+                # Здесь можно залогировать ошибку или вернуть словарь с описанием ошибки
+                return {"error": f"Сервер вернул статус {resp.status}", "details": text}
