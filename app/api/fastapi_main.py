@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from app.db.fetch_genres import fetch_genres
 import uvicorn
-from .routers import recommends, for_search, auth
+from .routers import recommends, for_search, auth, subscriptions
 app = FastAPI()
 
 app.include_router(recommends.router)
 app.include_router(auth.router)
 app.include_router(for_search.router)
+app.include_router(subscriptions.router)
+
+
 @app.on_event("startup")
 async def startup_event():
     await fetch_genres()

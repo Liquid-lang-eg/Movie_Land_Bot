@@ -10,7 +10,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register")
 async def register(user: UserSchema, db: AsyncSession = Depends(get_db)):
-    tg_hashed = hash_id(str(user.tg_id))
+    tg_hashed = hash_id(user.tg_id)
     query = select(User).filter(User.tg_id == tg_hashed)
     result = await db.execute(query)
     db_user = result.scalars().first()

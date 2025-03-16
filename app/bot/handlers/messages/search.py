@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from app.bot.backend_requests import fetch_from_backend
 from app.core.redis import redis_cache
-from app.bot.keyboards.inline import actor_movies_keyboard, movie_details_keyboard, get_actor_hash
+from app.bot.keyboards.search import actor_movies_keyboard, movie_details_keyboard, get_actor_hash
 
 router = Router()
 TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
@@ -67,7 +67,7 @@ async def send_movie_details(callback: CallbackQuery):
     movie = movies[movie_index]
     caption = (
         f"🎬 [{movie['title']} ({movie.get('release_date', '❓')[:4]})]({movie['tmdb_url']})\n\n"
-        f"📖 {movie.get('description', 'Описание отсутствует.')}"
+        f"📖 {movie.get('overview', 'Описание отсутствует.')}"
     )
 
     poster_url = movie.get("poster_path")
@@ -97,7 +97,6 @@ async def send_next_page(callback: CallbackQuery):
         await callback.answer("⚠ Данные устарели, попробуйте снова.")
         return
 
-    # Передаем actor_hash в качестве идентификатора – функция в inline проверит, что это уже хэш
     keyboard = actor_movies_keyboard(movies, actor_hash, page)
     await callback.message.edit_reply_markup(reply_markup=keyboard)
     await callback.answer()
