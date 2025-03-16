@@ -1,8 +1,9 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from app.bot.utils import get_actor_hash
+from app.bot.handlers.messages.back_to_menu import back_handler
 
 def actor_movies_keyboard(movies, actor_name, page=0, movies_per_page=5):
-    """Генерирует клавиатуру с фильмами актера"""
+    """Генерирует клавиатуру с фильмами актера и кнопкой 'Назад' внизу."""
     start_index = page * movies_per_page
     end_index = start_index + movies_per_page
     next_page = page + 1
@@ -23,10 +24,13 @@ def actor_movies_keyboard(movies, actor_name, page=0, movies_per_page=5):
             callback_data=f"next_page_{next_page}_{actor_hash}"
         )])
 
+    buttons.append([InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")])
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def movie_details_keyboard(movie):
-    """Кнопка с кликабельной ссылкой на фильм"""
+    """Генерирует клавиатуру с кнопкой 'Подробнее' и кнопкой 'Назад'."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎬 Подробнее на TMDB", url=movie["tmdb_url"])]
+        [InlineKeyboardButton(text="🎬 Подробнее на TMDB", url=movie["tmdb_url"])],
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]
     ])

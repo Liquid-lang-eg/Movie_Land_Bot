@@ -15,8 +15,3 @@ async def ask_movie(callback: CallbackQuery, state: FSMContext):
     await state.set_state(SearchState.movie_title)
     await callback.answer()
 
-@router.callback_query(F.data == "search_movie_by_actor")
-async def ask_movie(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите название фильма:")
-    await state.set_state(SearchState.movie_title)
-    await callback.answer()

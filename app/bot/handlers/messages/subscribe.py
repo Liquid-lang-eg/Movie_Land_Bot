@@ -2,11 +2,13 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery
 from app.bot.backend_requests import get_genres, get_user_subscriptions, subscribe_genre, unsubscribe_genre
 from app.bot.keyboards.genre import genre_subscription_keyboard
+from app.bot.handlers.messages.back_to_menu import back_handler
 
 router = Router()
 
 @router.callback_query(F.data == "subscribe_genre")
 async def show_genre_list(callback: CallbackQuery):
+    """Отображает список жанров с кнопкой 'Назад'"""
     tg_id = callback.from_user.id
     genres = await get_genres()
     user_subs = await get_user_subscriptions(tg_id)
@@ -51,3 +53,8 @@ async def handle_unsubscribe(callback: CallbackQuery):
     else:
         await callback.answer("Вы не подписаны на этот жанр.")
     await show_genre_list(callback)
+
+
+@router.callback_query(F.data == "back_to_menu")
+async def back_to_menu(callback: CallbackQuery):
+    await back_handler(callback)
