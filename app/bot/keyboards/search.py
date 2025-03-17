@@ -1,36 +1,45 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from app.bot.utils import get_actor_hash
-from app.bot.handlers.messages.back_to_menu import back_handler
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from app.bot.utils.pagination_utils import build_paginated_keyboard
+from app.bot.utils.utils import get_actor_hash
 
-def actor_movies_keyboard(movies, actor_name, page=0, movies_per_page=5):
-    """Генерирует клавиатуру с фильмами актера и кнопкой 'Назад' внизу."""
-    start_index = page * movies_per_page
-    end_index = start_index + movies_per_page
-    next_page = page + 1
 
+def make_actor_movie_row_generator(actor_hash: str):
+    """
+    Возвращает функцию-генератор, которая для каждого фильма создаёт строку с кнопкой.
+    """
+    def generator(movie: dict, index: int):
+        text = f"{movie['title']} ({movie.get('release_date', '❓')[:4]})"
+        callback_data = f"movie_{index}_{actor_hash}"
+        return [InlineKeyboardButton(text=text, callback_data=callback_data)]
+    return generator
+
+
+def actor_movies_keyboard(movies: list, actor_name: str, page: int = 0, movies_per_page: int = 5) -> InlineKeyboardMarkup:
+    """
+    Генерирует клавиатуру с фильмами актёра и кнопками пагинации.
+    Если actor_name не нужен для отображения, можно передать вместо него actor_hash.
+    """
     actor_hash = get_actor_hash(actor_name)
+    item_generator = make_actor_movie_row_generator(actor_hash)
+    extra = [[InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]]
+    return build_paginated_keyboard(
+        data=movies,
+        per_page=movies_per_page,
+        page=page,
+        callback_prefix=f"actor_movies_{actor_hash}",
+        item_row_generator=item_generator,
+        extra_buttons=extra
+    )
 
-    buttons = [
-        [InlineKeyboardButton(
-            text=f"{movie['title']} ({movie.get('release_date', '❓')[:4]})",
-            callback_data=f"movie_{i}_{actor_hash}"
-        )]
-        for i, movie in enumerate(movies[start_index:end_index], start=start_index)
-    ]
 
-    if end_index < len(movies):
-        buttons.append([InlineKeyboardButton(
-            text="➡ Еще",
-            callback_data=f"next_page_{next_page}_{actor_hash}"
-        )])
+def movie_details_keyboard(movie: dict, actor_hash: str, page: int = 0) -> InlineKeyboardMarkup:
+    """
+    Генерирует клавиатуру для просмотра деталей фильма.
 
-    buttons.append([InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")])
-
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def movie_details_keyboard(movie):
-    """Генерирует клавиатуру с кнопкой 'Подробнее' и кнопкой 'Назад'."""
+    Кнопка "🎬 Подробнее на TMDB" открывает ссылку movie["tmdb_url"].
+    Кнопка "🔙 Назад" возвращает пользователя к списку фильмов для данного актёра на указанной странице.
+    """
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🎬 Подробнее на TMDB", url=movie["tmdb_url"])],
-        [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="🔙 Назад", callback_data=f"back_to_movie_list_{actor_hash}_{page}")]
     ])

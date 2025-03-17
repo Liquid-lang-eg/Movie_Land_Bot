@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from app.bot.utils import get_actor_hash
+
 
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
