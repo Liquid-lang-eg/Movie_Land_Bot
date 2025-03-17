@@ -6,11 +6,13 @@ from app.bot.keyboards.search import actor_movies_keyboard, movie_details_keyboa
 router = Router()
 MOVIES_PER_PAGE = 5
 
-@router.callback_query(F.data.startswith("actor_movies_page_"))
+@router.callback_query(F.data.startswith("actor_movies_"))
 async def paginate_actor_movies(callback: CallbackQuery):
     try:
-        _, _, actor_hash, page_str = callback.data.split("_")
-        page = int(page_str)
+        parts = callback.data.rsplit("_", 1)  # parts[1] = номер страницы
+        page = int(parts[1])
+        # parts[0] должно иметь вид "actor_movies_<actor_hash>_page"
+        actor_hash = parts[0].split("_")[2]
     except Exception:
         await callback.answer("Ошибка данных, попробуйте снова.")
         return

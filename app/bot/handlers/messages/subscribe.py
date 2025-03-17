@@ -15,7 +15,7 @@ async def show_genre_list(callback: CallbackQuery, page: int = 0):
     user_genre_ids = {sub["genre_id"] for sub in user_subs} if user_subs else set()
 
     page_genres, total_pages = paginate(genres, page, GENRES_PER_PAGE)
-
+    # breakpoint()
     genre_buttons = [
         [InlineKeyboardButton(
             text=f"{'✅' if genre['id'] in user_genre_ids else ''} {genre['name']}",
@@ -25,7 +25,7 @@ async def show_genre_list(callback: CallbackQuery, page: int = 0):
     ]
 
     pagination_kb = pagination_keyboard("genre", page, total_pages, extra_buttons=[
-        [InlineKeyboardButton("🔙 Назад", callback_data="back_to_menu")]
+        [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]
     ])
     print(InlineKeyboardButton)
     final_buttons = genre_buttons + pagination_kb.inline_keyboard

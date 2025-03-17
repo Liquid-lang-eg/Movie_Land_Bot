@@ -14,12 +14,13 @@ def make_actor_movie_row_generator(actor_hash: str):
     return generator
 
 
-def actor_movies_keyboard(movies: list, actor_name: str, page: int = 0, movies_per_page: int = 5) -> InlineKeyboardMarkup:
+def actor_movies_keyboard(movies: list, actor_hash: str, page: int = 0,
+                          movies_per_page: int = 5) -> InlineKeyboardMarkup:
     """
     Генерирует клавиатуру с фильмами актёра и кнопками пагинации.
-    Если actor_name не нужен для отображения, можно передать вместо него actor_hash.
+
+    Принимает actor_hash (а не actor_name), чтобы callback_data генерировались корректно.
     """
-    actor_hash = get_actor_hash(actor_name)
     item_generator = make_actor_movie_row_generator(actor_hash)
     extra = [[InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]]
     return build_paginated_keyboard(

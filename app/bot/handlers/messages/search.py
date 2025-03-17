@@ -17,15 +17,12 @@ class SearchState(StatesGroup):
 
 @router.message(SearchState.actor_name)
 async def get_actor_movies_handler(message: Message, state: FSMContext):
-    """
-    Обрабатывает ввод имени актёра, получает фильмы через backend (с кэшированием)
-    и выводит клавиатуру с фильмами с поддержкой пагинации.
-    """
     actor_name = message.text.strip().lower()
     if not actor_name:
         await message.answer("⚠ Введите корректное имя актера.")
         return
 
+    # Вычисляем хэш один раз
     actor_hash = get_actor_hash(actor_name)
     cache_key = f"actor_movies:{actor_hash}"
     movies = await redis_cache.get(cache_key)
@@ -46,8 +43,10 @@ async def get_actor_movies_handler(message: Message, state: FSMContext):
         await message.answer(f"🎬 У {actor_name} нет фильмов в базе.")
         return
 
-    keyboard = actor_movies_keyboard(movies, actor_name, page=0, movies_per_page=MOVIES_PER_PAGE)
+    # Передаём actor_hash вместо actor_name
+    keyboard = actor_movies_keyboard(movies, actor_hash, page=0, movies_per_page=MOVIES_PER_PAGE)
     await message.answer(f"🎬 Фильмы с {actor_name}:", reply_markup=keyboard)
+
 
 @router.callback_query(F.data.startswith("actor_movies_"))
 async def paginate_actor_movies(callback: CallbackQuery):
