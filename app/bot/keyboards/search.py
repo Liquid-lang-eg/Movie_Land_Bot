@@ -18,8 +18,6 @@ def actor_movies_keyboard(movies: list, actor_hash: str, page: int = 0,
                           movies_per_page: int = 5) -> InlineKeyboardMarkup:
     """
     Генерирует клавиатуру с фильмами актёра и кнопками пагинации.
-
-    Принимает actor_hash (а не actor_name), чтобы callback_data генерировались корректно.
     """
     item_generator = make_actor_movie_row_generator(actor_hash)
     extra = [[InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]]
@@ -33,14 +31,16 @@ def actor_movies_keyboard(movies: list, actor_hash: str, page: int = 0,
     )
 
 
-def movie_details_keyboard(movie: dict, actor_hash: str, page: int = 0) -> InlineKeyboardMarkup:
+def movie_details_keyboard(movie: dict, actor_hash: str = None, page: int = 0) -> InlineKeyboardMarkup:
     """
     Генерирует клавиатуру для просмотра деталей фильма.
 
-    Кнопка "🎬 Подробнее на TMDB" открывает ссылку movie["tmdb_url"].
-    Кнопка "🔙 Назад" возвращает пользователя к списку фильмов для данного актёра на указанной странице.
+    - Кнопка "🎬 Подробнее на TMDB" открывает ссылку movie["tmdb_url"].
+    - Кнопка "🔙 Назад" появляется только при поиске по актёру.
     """
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎬 Подробнее на TMDB", url=movie["tmdb_url"])],
-        [InlineKeyboardButton(text="🔙 Назад", callback_data=f"back_to_movie_list_{actor_hash}_{page}")]
-    ])
+    buttons = [[InlineKeyboardButton(text="🎬 Подробнее на TMDB", url=movie["tmdb_url"])]]
+
+    if actor_hash:
+        buttons.append([InlineKeyboardButton(text="🔙 Назад", callback_data=f"back_to_movie_list_{actor_hash}_{page}")])
+
+    return InlineKeyboardMarkup(inline_keyboard=buttons)

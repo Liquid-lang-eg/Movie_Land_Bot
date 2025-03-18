@@ -9,9 +9,8 @@ MOVIES_PER_PAGE = 5
 @router.callback_query(F.data.startswith("actor_movies_"))
 async def paginate_actor_movies(callback: CallbackQuery):
     try:
-        parts = callback.data.rsplit("_", 1)  # parts[1] = номер страницы
+        parts = callback.data.rsplit("_", 1)
         page = int(parts[1])
-        # parts[0] должно иметь вид "actor_movies_<actor_hash>_page"
         actor_hash = parts[0].split("_")[2]
     except Exception:
         await callback.answer("Ошибка данных, попробуйте снова.")
@@ -30,7 +29,6 @@ async def paginate_actor_movies(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("movie_"))
 async def send_movie_details(callback: CallbackQuery):
     try:
-        # Ожидается формат: "movie_<movie_index>_<actor_hash>"
         _, movie_index, actor_hash = callback.data.split("_", 2)
         movie_index = int(movie_index)
     except Exception:
@@ -69,7 +67,6 @@ async def send_movie_details(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("next_page_"))
 async def send_next_page(callback: CallbackQuery):
     try:
-        # Ожидается формат: "next_page_<page>_<actor_hash>"
         _, page_str, actor_hash = callback.data.split("_", 2)
         page = int(page_str)
     except Exception:

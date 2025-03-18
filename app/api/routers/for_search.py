@@ -6,6 +6,7 @@ from config import TMDB_API_KEY
 router = APIRouter()
 
 TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/person"
+TMDB_SEARCH_URL_MOVIE = "https://api.themoviedb.org/3/search/movie"
 TMDB_MOVIE_CREDITS_URL = "https://api.themoviedb.org/3/person/{actor_id}/movie_credits"
 
 @router.get("/actors/movies/")
@@ -56,7 +57,7 @@ async def search_movie(title: str):
 
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            f"{TMDB_SEARCH_URL}?api_key={TMDB_API_KEY}&query={encoded_title}&language=ru-RU"
+            f"{TMDB_SEARCH_URL_MOVIE}?api_key={TMDB_API_KEY}&query={encoded_title}&language=ru-RU"
         ) as resp:
             if resp.status != 200:
                 raise HTTPException(status_code=resp.status, detail="Ошибка поиска фильма")

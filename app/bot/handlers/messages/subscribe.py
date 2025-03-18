@@ -10,16 +10,18 @@ GENRES_PER_PAGE = 6
 async def show_genre_list(callback: CallbackQuery, page: int = 0):
     """Отображает список жанров с кнопками подписки/отписки и поддержкой пагинации"""
     tg_id = callback.from_user.id
+    print("DEBUG: show_genre_list called")
     genres = await get_genres()
+    print(f"DEBUG: genres = {genres}")
     user_subs = await get_user_subscriptions(tg_id)
     user_genre_ids = {sub["genre_id"] for sub in user_subs} if user_subs else set()
 
     page_genres, total_pages = paginate(genres, page, GENRES_PER_PAGE)
-    # breakpoint()
     genre_buttons = [
         [InlineKeyboardButton(
             text=f"{'✅' if genre['id'] in user_genre_ids else ''} {genre['name']}",
-            callback_data=f"subscribe_{genre['id']}"
+            # Включаем номер страницы в callback_data
+            callback_data=f"{'unsubscribe' if genre['id'] in user_genre_ids else 'subscribe'}_{genre['id']}_{page}"
         )]
         for genre in page_genres
     ]
@@ -27,7 +29,6 @@ async def show_genre_list(callback: CallbackQuery, page: int = 0):
     pagination_kb = pagination_keyboard("genre", page, total_pages, extra_buttons=[
         [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]
     ])
-    print(InlineKeyboardButton)
     final_buttons = genre_buttons + pagination_kb.inline_keyboard
     final_keyboard = InlineKeyboardMarkup(inline_keyboard=final_buttons)
 
@@ -48,10 +49,12 @@ async def paginate_genres(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("subscribe_"))
 async def handle_subscribe(callback: CallbackQuery):
-    """Обрабатывает подписку на жанр"""
+    """Обрабатывает подписку на жанр, оставаясь на текущей странице"""
     try:
-        _, genre_id_str = callback.data.split("_", 1)
-        genre_id = int(genre_id_str)
+        # Формат callback_data: subscribe_<genre_id>_<page>
+        parts = callback.data.split("_")
+        genre_id = int(parts[1])
+        current_page = int(parts[2]) if len(parts) > 2 else 0
     except ValueError:
         await callback.answer("Ошибка данных", show_alert=True)
         return
@@ -63,14 +66,17 @@ async def handle_subscribe(callback: CallbackQuery):
     else:
         await callback.answer("Вы уже подписаны на этот жанр.")
 
-    await show_genre_list(callback, page=0)
+    # Передаем current_page вместо фиксированного 0
+    await show_genre_list(callback, page=current_page)
 
 @router.callback_query(F.data.startswith("unsubscribe_"))
 async def handle_unsubscribe(callback: CallbackQuery):
-    """Обрабатывает отписку от жанра"""
+    """Обрабатывает отписку от жанра, оставаясь на текущей странице"""
     try:
-        _, genre_id_str = callback.data.split("_", 1)
-        genre_id = int(genre_id_str)
+        # Формат callback_data: unsubscribe_<genre_id>_<page>
+        parts = callback.data.split("_")
+        genre_id = int(parts[1])
+        current_page = int(parts[2]) if len(parts) > 2 else 0
     except ValueError:
         await callback.answer("Ошибка данных", show_alert=True)
         return
@@ -82,11 +88,11 @@ async def handle_unsubscribe(callback: CallbackQuery):
     else:
         await callback.answer("Вы не подписаны на этот жанр.")
 
-    await show_genre_list(callback, page=0)
+    await show_genre_list(callback, page=current_page)
+
 
 @router.callback_query(F.data == "back_to_menu")
 async def back_to_menu(callback: CallbackQuery):
-    """Возвращает пользователя в главное меню"""
-    from app.bot.keyboards.inline import main_menu  # Убедитесь, что этот импорт корректен
+    from app.bot.keyboards.inline import main_menu
     await callback.message.edit_text("Главное меню", reply_markup=main_menu())
     await callback.answer()

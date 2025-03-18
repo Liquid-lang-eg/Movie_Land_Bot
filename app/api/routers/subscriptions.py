@@ -4,18 +4,20 @@ from sqlalchemy import select
 from app.db.models import Genre, UserGenreSubscription, User
 from app.db.conn import get_db
 from app.api.utils import hash_id
+import random
+from app.core.redis import redis_cache
 
 router = APIRouter(prefix="/subscription", tags=["subscription"])
 
 
 @router.get("/genres/")
-async def get_genres_endpoint(session: AsyncSession = Depends(get_db)):
+async def get_genres(session: AsyncSession = Depends(get_db)):
     result = await session.execute(select(Genre))
     genres = result.scalars().all()
     return [{"id": genre.id, "name": genre.name} for genre in genres]
 
 @router.get("/subscriptions/")
-async def get_user_subscriptions_endpoint(user_tg_id: int = Query(...), session: AsyncSession = Depends(get_db)):
+async def get_user_subscriptions(user_tg_id: int = Query(...), session: AsyncSession = Depends(get_db)):
     hashed_tg = hash_id(user_tg_id)
     result = await session.execute(
         select(UserGenreSubscription)
@@ -26,7 +28,7 @@ async def get_user_subscriptions_endpoint(user_tg_id: int = Query(...), session:
     return [{"genre_id": sub.genre_id} for sub in subscriptions]
 
 @router.post("/subscribe/")
-async def subscribe_endpoint(
+async def subscribe(
     user_tg_id: int = Body(...),
     genre_id: int = Body(...),
     session: AsyncSession = Depends(get_db)
@@ -54,8 +56,8 @@ async def subscribe_endpoint(
     return {"detail": "Subscribed"}
 
 
-@router.post("/unsubscribe/")
-async def unsubscribe_endpoint(
+@router.delete("/unsubscribe/")
+async def unsubscribe(
         user_tg_id: int = Body(...),
         genre_id: int = Body(...),
         session: AsyncSession = Depends(get_db)
@@ -78,7 +80,14 @@ async def unsubscribe_endpoint(
     if not subscription:
         raise HTTPException(status_code=400, detail="Not subscribed")
 
-    # Удаляем подписку
     await session.delete(subscription)
     await session.commit()
     return {"detail": "Unsubscribed"}
+
+
+async def get_random_movie_id_for_genre(genre_id: int) -> int:
+    key = f"movies:genre:{genre_id}:ids"
+    movie_ids = await redis_cache.get(key)
+    if not movie_ids:
+        raise Exception("Нет данных по фильмам для данного жанра")
+    return random.choice(movie_ids)

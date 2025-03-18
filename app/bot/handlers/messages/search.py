@@ -4,7 +4,6 @@ from aiogram.fsm.context import FSMContext
 from app.bot.backend_requests import fetch_from_backend
 from app.core.redis import redis_cache
 from app.bot.keyboards.search import actor_movies_keyboard, movie_details_keyboard, get_actor_hash
-from app.bot.utils.pagination_utils import build_paginated_keyboard  # если нужно отдельно
 from aiogram.fsm.state import State, StatesGroup
 
 router = Router()
@@ -15,6 +14,69 @@ class SearchState(StatesGroup):
     movie_title = State()
     actor_name = State()
 
+# 🎬 Обработчик кнопки "🔍 Найти фильм"
+@router.callback_query(F.data == "search_movie_by_title")
+async def ask_movie_title(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("📽 Введите название фильма:")
+    await state.set_state(SearchState.movie_title)
+    await callback.answer()
+
+@router.message(SearchState.movie_title)
+async def search_movie_by_title(message: Message, state: FSMContext):
+    print(f"✅ Пользователь ввёл название фильма: {message.text}")
+    title = message.text.strip()
+    if not title:
+        await message.answer("⚠ Введите корректное название фильма.")
+        return
+
+    cache_key = f"movie_search:{title.lower()}"
+    movie = await redis_cache.get(cache_key)
+
+    if not movie:
+        try:
+            movie = await fetch_from_backend("/movies/search/", {"title": title, "language": "ru-RU"})
+            print(f"🎬 Ответ от бекенда: {movie}")
+            if not movie:
+                await message.answer(f"🔍 Фильм '{title}' не найден.")
+                await state.clear()
+                return
+
+
+            await redis_cache.set(cache_key, movie, expire=86400)
+        except Exception as e:
+            await message.answer(f"❌ Ошибка при получении данных: {str(e)}")
+            await state.clear()
+            return
+
+    await state.clear()
+
+    # 🛑 Проверяем, есть ли ключи в ответе
+    movie_title = movie.get("title", "Название неизвестно")
+    release_date = movie.get("release_date", "❓")[:4]
+    overview = movie.get("overview", "Описание отсутствует.")
+    movie_url = movie.get("tmdb_url", "https://www.themoviedb.org/")
+
+    caption = (
+        f"🎬 [{movie_title} ({release_date})]({movie_url})\n\n"
+        f"📖 {overview}"
+    )
+
+    poster_url = movie.get("poster_path")
+    if poster_url:
+        poster_url = f"https://image.tmdb.org/t/p/w500{poster_url}"
+        await message.answer_photo(
+            photo=poster_url,
+            caption=caption,
+            parse_mode="Markdown",
+            reply_markup=movie_details_keyboard(movie)
+        )
+    else:
+        await message.answer(
+            caption,
+            parse_mode="Markdown",
+            reply_markup=movie_details_keyboard(movie)
+        )
+
 @router.message(SearchState.actor_name)
 async def get_actor_movies_handler(message: Message, state: FSMContext):
     actor_name = message.text.strip().lower()
@@ -22,7 +84,6 @@ async def get_actor_movies_handler(message: Message, state: FSMContext):
         await message.answer("⚠ Введите корректное имя актера.")
         return
 
-    # Вычисляем хэш один раз
     actor_hash = get_actor_hash(actor_name)
     cache_key = f"actor_movies:{actor_hash}"
     movies = await redis_cache.get(cache_key)
