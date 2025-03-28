@@ -5,9 +5,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.api.fastapi_main import app
 from app.api.utils import hash_id
-from app.db.models import Base
+from app.db.models import Base, User
 from app.db.conn import get_db
-from models import User
 from config import DATABASE_URL
 
 DATABASE_URL = DATABASE_URL

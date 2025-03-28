@@ -1,12 +1,30 @@
-import os
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 
-load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-ALGORITHM = os.getenv("ALGORITHM")
-DATABASE_URL = os.getenv("DATABASE_URL")
-TMDB_API_KEY = os.getenv("TMDB_API_KEY")
-BACKEND_URL = os.getenv("BACKEND_URL")
-REDIS_URL = os.getenv("REDIS_URL")
-MAX_ERROR_LENGTH = 500
+class Settings(BaseSettings):
+    DOCKER_HUB_USERNAME: str
+    BOT_TOKEN: str
+
+    SECRET_KEY_ADMIN: str
+    ALGORITHM: str = "HS256"
+
+    TMDB_API_KEY: str
+
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: int
+    DB_NAME: str
+
+    REDIS_HOST: str
+    REDIS_PORT: str
+
+    MAX_ERROR_LENGTH: int = 500
+
+    BACKEND_URL: str
+
+    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+
+settings = Settings()

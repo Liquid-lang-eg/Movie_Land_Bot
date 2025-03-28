@@ -1,14 +1,14 @@
 import redis.asyncio as redis
 import json
 from typing import Optional, Any
-from config import REDIS_URL
+from config import settings
 
 class RedisCache:
     def __init__(self):
         self.redis = None
 
     async def connect(self):
-        self.redis = await redis.from_url(REDIS_URL, decode_responses=True)
+        self.redis = await redis.from_url(settings.REDIS_HOST + settings.REDIS_PORT, decode_responses=True)
 
     async def set(self, key: str, value: Any, expire: int = 3600):
         if self.redis:
