@@ -1,10 +1,17 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from app.bot.backend_requests import get_genres, get_user_subscriptions, subscribe_genre, unsubscribe_genre
-from app.bot.handlers.pagination.pagination import paginate, pagination_keyboard
+from app.keyboards.inline import main_menu
+from app.backend_requests import (
+    get_genres,
+    get_user_subscriptions,
+    subscribe_genre,
+    unsubscribe_genre,
+)
+from handlers.pagination.pagination import paginate, pagination_keyboard
 
 router = Router()
 GENRES_PER_PAGE = 6
+
 
 @router.callback_query(F.data == "subscribe_genre")
 async def show_genre_list(callback: CallbackQuery, page: int = 0):
@@ -18,22 +25,32 @@ async def show_genre_list(callback: CallbackQuery, page: int = 0):
 
     page_genres, total_pages = paginate(genres, page, GENRES_PER_PAGE)
     genre_buttons = [
-        [InlineKeyboardButton(
-            text=f"{'✅' if genre['id'] in user_genre_ids else ''} {genre['name']}",
-            # Включаем номер страницы в callback_data
-            callback_data=f"{'unsubscribe' if genre['id'] in user_genre_ids else 'subscribe'}_{genre['id']}_{page}"
-        )]
+        [
+            InlineKeyboardButton(
+                text=f"{'✅' if genre['id'] in user_genre_ids else ''} {genre['name']}",
+                # Включаем номер страницы в callback_data
+                callback_data=f"{'unsubscribe' if genre['id'] in user_genre_ids else 'subscribe'}_{genre['id']}_{page}",
+            )
+        ]
         for genre in page_genres
     ]
 
-    pagination_kb = pagination_keyboard("genre", page, total_pages, extra_buttons=[
-        [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]
-    ])
+    pagination_kb = pagination_keyboard(
+        "genre",
+        page,
+        total_pages,
+        extra_buttons=[
+            [InlineKeyboardButton(text="🔙 Назад", callback_data="back_to_menu")]
+        ],
+    )
     final_buttons = genre_buttons + pagination_kb.inline_keyboard
     final_keyboard = InlineKeyboardMarkup(inline_keyboard=final_buttons)
 
-    await callback.message.edit_text("Выберите жанр для подписки/отписки:", reply_markup=final_keyboard)
+    await callback.message.edit_text(
+        "Выберите жанр для подписки/отписки:", reply_markup=final_keyboard
+    )
     await callback.answer()
+
 
 @router.callback_query(F.data.startswith("genre_page_"))
 async def paginate_genres(callback: CallbackQuery):
@@ -46,6 +63,7 @@ async def paginate_genres(callback: CallbackQuery):
         return
 
     await show_genre_list(callback, page)
+
 
 @router.callback_query(F.data.startswith("subscribe_"))
 async def handle_subscribe(callback: CallbackQuery):
@@ -68,6 +86,7 @@ async def handle_subscribe(callback: CallbackQuery):
 
     # Передаем current_page вместо фиксированного 0
     await show_genre_list(callback, page=current_page)
+
 
 @router.callback_query(F.data.startswith("unsubscribe_"))
 async def handle_unsubscribe(callback: CallbackQuery):
@@ -93,6 +112,6 @@ async def handle_unsubscribe(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back_to_menu")
 async def back_to_menu(callback: CallbackQuery):
-    from app.bot.keyboards.inline import main_menu
+
     await callback.message.edit_text("Главное меню", reply_markup=main_menu())
     await callback.answer()

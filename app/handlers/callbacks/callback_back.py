@@ -1,6 +1,6 @@
 from aiogram import Router, F, types
 from aiogram.types import CallbackQuery
-from app.bot.keyboards.inline import main_menu  # импорт клавиатуры главного меню
+from app.keyboards.inline import main_menu
 
 router = Router()
 

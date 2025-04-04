@@ -9,6 +9,7 @@ from app.db.models import User
 
 
 class AdminAuth(AuthenticationBackend):
+
     async def login(self, request: Request) -> bool:
         form = await request.form()
         tg_id, password = form["telegram_id"], form["password"]

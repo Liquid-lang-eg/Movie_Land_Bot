@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
-from app.core.redis import redis_cache
-from app.bot.keyboards.search import actor_movies_keyboard, movie_details_keyboard
+from core.redis import redis_cache
+from keyboards.search import actor_movies_keyboard, movie_details_keyboard
 
 router = Router()
 MOVIES_PER_PAGE = 5
